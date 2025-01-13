@@ -8,7 +8,7 @@ namespace dmstr\modules\prototype\controllers\api;
 
 use Yii;
 use yii\filters\AccessControl;
-use yii\helpers\ArrayHelper;
+use yii\filters\VerbFilter;
 use yii\rest\ActiveController;
 
 class LessController extends ActiveController
@@ -18,26 +18,43 @@ class LessController extends ActiveController
     /**
      * @inheritdoc
      */
+    public function actions()
+    {
+        $actions = parent::actions();
+        $actions['update-access-list'] = [
+            'class' => 'dmstr\modules\prototype\controllers\api\actions\UpdateAccessListAction',
+            'modelClass' => $this->modelClass,
+            'checkAccess' => [$this, 'checkAccess'],
+        ];
+        return $actions;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function behaviors()
     {
-        return ArrayHelper::merge(
-            parent::behaviors(),
-            [
-                'access' => [
-                    'class' => AccessControl::className(),
-                    'rules' => [
-                        [
-                            'allow' => true,
-                            'matchCallback' => function ($rule, $action) {
-                                return Yii::$app->user->can(
-                                    $this->module->id.'_'.$this->id.'_'.$action->id,
-                                    ['route' => true]
-                                );
-                            },
-                        ],
-                    ],
-                ],
+        $behaviors = parent::behaviors();
+        $behaviors['access'] = [
+            'class' => AccessControl::className(),
+            'rules' => [
+                [
+                    'allow' => true,
+                    'matchCallback' => function ($rule, $action) {
+                        return Yii::$app->user->can(
+                            $this->module->id . '_' . $this->id . '_' . $action->id,
+                            ['route' => true]
+                        );
+                    }
+                ]
             ]
-        );
+        ];
+        $behaviors['verbs'] = [
+            'class' => VerbFilter::class,
+            'actions' => [
+                'update-access-list' => ['PATCH'],
+            ]
+        ];
+        return $behaviors;
     }
 }

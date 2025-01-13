@@ -12,6 +12,7 @@ $this->title = 'Less '.$model->id.', '.Yii::t('prototype', 'Edit');
 $this->params['breadcrumbs'][] = ['label' => 'Lesses', 'url' => ['index']];
 $this->params['breadcrumbs'][] = ['label' => (string)$model->id, 'url' => ['view', 'id' => $model->id]];
 $this->params['breadcrumbs'][] = Yii::t('prototype', 'Edit');
+
 ?>
 <div class="giiant-crud less-update">
 
@@ -28,6 +29,9 @@ $this->params['breadcrumbs'][] = Yii::t('prototype', 'Edit');
             ['class' => 'btn btn-default']
         ) ?>
     </div>
+
+    <h4><?php echo Yii::t('prototype', 'Active Users') ?></h4>
+    <div id="active-users"></div>
 
     <?php echo $this->render(
         '_form',

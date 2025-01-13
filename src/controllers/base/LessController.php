@@ -5,6 +5,7 @@
 namespace dmstr\modules\prototype\controllers\base;
 
 use dmstr\bootstrap\Tabs;
+use dmstr\modules\prototype\assets\AccessTrackingAsset;
 use dmstr\modules\prototype\models\Less;
 use dmstr\modules\prototype\models\search\Less as LessSearch;
 use Exception;
@@ -96,6 +97,9 @@ class LessController extends Controller
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
+        if (!Yii::$app->getUser()->getIsGuest()) {
+            $model->addUserToAccessList(Yii::$app->getUser()->getId());
+        }
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             Yii::$app->session->addFlash('success', 'Record has been updated');
 
@@ -119,6 +123,8 @@ class LessController extends Controller
                 return $this->redirect(['index']);
             }
         }
+
+        AccessTrackingAsset::register($this->view);
         return $this->render(
             'update',
             [

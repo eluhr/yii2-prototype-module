@@ -4,9 +4,10 @@ namespace dmstr\modules\prototype\models;
 
 use bedezign\yii2\audit\AuditTrailBehavior;
 use dmstr\modules\prototype\traits\EditorEntry;
+use mikehaertl\shellcommand\Command;
 use Yii;
 use yii\helpers\FileHelper;
-use mikehaertl\shellcommand\Command;
+use yii\web\IdentityInterface;
 
 /**
  * This is the model class for table "app_less".
@@ -74,6 +75,7 @@ class Less extends BaseModel
      * the .stylelintrc.json file, else a default config will be used.
      * If $fix is set the fixed code will be stored in the $fixedValue property.
      * Lint errors will be stored in $lintErrors property.
+     *
      * @param bool $fix if stylelint should fix the less source code
      */
     public function lintLess($fix = false)
@@ -174,5 +176,65 @@ class Less extends BaseModel
         }
 
         return true;
+    }
+
+    /**
+     * Get the list of users who accessed the model in the last 10 seconds.
+     *
+     * @return array The list of user IDs with timestamps for recent access.
+     */
+    public function getRecentAccessList()
+    {
+        $cacheKey = $this->getCacheKey(); // Unique cache key for the model instance
+        $cacheDuration = 10; // Duration in seconds to consider recent access
+        $currentTime = time(); // Current timestamp
+
+        // Retrieve the current access list from the cache
+        $accessList = Yii::$app->getCache()->get($cacheKey) ?: [];
+
+        // Filter out entries older than 10 seconds
+        $accessList = array_filter($accessList, function ($timestamp) use ($currentTime, $cacheDuration) {
+            return ($currentTime - $timestamp) <= $cacheDuration;
+        });
+
+        return $accessList; // Return the filtered access list
+    }
+
+    /**
+     * Add a user to the access list.
+     *
+     * @param int|string $userId The unique identifier for the user.
+     * @return void
+     */
+    public function addUserToAccessList($userId)
+    {
+        $cacheKey = $this->getCacheKey(); // Unique cache key for the model instance
+        $accessList = $this->getRecentAccessList(); // Get the filtered list of recent accesses
+
+        // Add or update the user's access timestamp
+        $accessList[$userId] = time();
+
+        // Save the updated access list back to the cache
+        Yii::$app->getCache()->set($cacheKey, $accessList, 10); // Cache duration of 10 seconds
+    }
+
+    /**
+     * Get the unique cache key for this model instance.
+     *
+     * @return string The cache key.
+     */
+    protected function getCacheKey()
+    {
+        return "dmstr.prototype." . __CLASS__ . '.' . $this->id;
+    }
+
+    /**
+     * @inheritdoc
+    */
+    public function fields()
+    {
+        $fields = parent::fields();
+        $fields[] = 'recentAccessList';
+        return $fields;
     }
 }
